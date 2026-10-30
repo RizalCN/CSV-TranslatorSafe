@@ -14,4 +14,4 @@ android.minapi = 23
 android.ndk = 25b
 android.accept_sdk_license = True
 android.allow_backup = True
-p4a.branch = master
+p4a.branch = v2024.01.21

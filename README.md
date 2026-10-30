@@ -1,6 +1,9 @@
 # Toy Story 3 CSV Translator — Android project
 
 This is an Android/Kivy port of the desktop CSV translator. It is not a prebuilt APK.
+
+## Build fix based on the uploaded Actions log
+The failed build compiled CPython 3.14.2 and stopped in `Python/remote_debugging.c` because Android ARMv7 did not declare `preadv` / `pwritev`. The build config now pins python-for-android to the stable `v2024.01.21` release instead of tracking a newer recipe that selected CPython 3.14. This is a targeted fix; it still needs a fresh GitHub Actions run to confirm the build succeeds.
 The GitHub Actions workflow builds a debug APK and uploads it as a workflow artifact.
 
 ## Features
