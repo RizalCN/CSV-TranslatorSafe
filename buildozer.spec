@@ -1,3 +1,4 @@
+
 [app]
 title = Toy Story 3 CSV Translator
 package.name = toystory3csvtranslator
@@ -16,9 +17,8 @@ android.ndk = 25b
 android.accept_sdk_license = True
 android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = False
+p4a.branch = v2024.01.21
 
 [buildozer]
 log_level = 2
 warn_on_root = 1
-
-p4a.branch = v2024.01.21
