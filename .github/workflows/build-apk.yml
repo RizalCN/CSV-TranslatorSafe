@@ -15,38 +15,77 @@ jobs:
     timeout-minutes: 90
 
     steps:
+      # 1. Mengambil kode dari repositori
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2. Menggunakan Java 17 agar sesuai dengan kebutuhan Gradle
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # 3. Memastikan Java 17 benar-benar aktif
+      - name: Verify Java
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
+          java -version 2>&1 | grep -q '17\.'
+
+      # 4. Memasang dependensi sistem untuk Buildozer dan Android
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            python3-pip python3-venv git zip unzip \
-            openjdk-17-jdk build-essential \
-            autoconf automake libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            cmake libffi-dev libssl-dev
+            python3-pip \
+            python3-venv \
+            git \
+            zip \
+            unzip \
+            build-essential \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            liblzma-dev \
+            uuid-dev
 
+      # 5. Memasang Buildozer dan Cython dengan versi tetap
       - name: Install pinned build tools
         run: |
           python3 -m pip install --upgrade "pip<26" setuptools wheel
           python3 -m pip install \
             "buildozer==1.5.0" \
             "Cython==0.29.36"
+
           buildozer --version
           cython --version
 
+      # 6. Memeriksa konfigurasi Android
       - name: Verify configuration
         run: |
-          grep -E '^(requirements|android.api|android.minapi|android.ndk|p4a.branch) *=' buildozer.spec
+          test -f buildozer.spec
+
+          grep -E \
+            '^(requirements|android.api|android.minapi|android.ndk|p4a.branch) *=' \
+            buildozer.spec
+
           grep -q '^p4a.branch = v2024.01.21$' buildozer.spec
 
+      # 7. Membersihkan hasil build lama dan membuat APK
       - name: Build APK
         run: |
           rm -rf .buildozer bin
           buildozer -v android debug
 
+      # 8. Mengunggah APK jika build berhasil
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
