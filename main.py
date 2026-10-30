@@ -19,6 +19,11 @@ from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput
 from kivy.utils import platform
 
+try:
+    from android_saf import pick_document, read_uri, write_uri
+except Exception:
+    pick_document = read_uri = write_uri = None
+
 GOOGLE_ENDPOINT = "https://translate.googleapis.com/translate_a/single"
 REQUIRED_COLUMNS = {"index", "file_offset_hex", "byte_length", "raw_hex", "translation"}
 SOURCE_COLUMN_CANDIDATES = ("text_or_escaped_bytes", "source", "text", "original", "english")
@@ -197,6 +202,7 @@ class RootUI(BoxLayout):
         self.encoding = "utf-8-sig"
         self.current = 0
         self.file_path = ""
+        self._source_uri = None
 
     def info(self, message, title="Info"):
         content = BoxLayout(orientation="vertical", padding=10, spacing=10)
@@ -208,6 +214,25 @@ class RootUI(BoxLayout):
         popup.open()
 
     def choose_csv(self):
+        if platform == "android" and pick_document is not None:
+            self.status = "Pilih file CSV dari pemilih file Android."
+            def picked(uri, name, error):
+                if error:
+                    self.info(error, "Pemilih file")
+                    return
+                try:
+                    raw = read_uri(uri)
+                    safe_name = Path(str(name or "translation.csv")).name or "translation.csv"
+                    local_path = Path(App.get_running_app().user_data_dir) / safe_name
+                    local_path.write_bytes(raw)
+                    self._source_uri = uri
+                    self.file_path = str(local_path)
+                    self.ids.path_input.text = self.file_path
+                    self.load_path()
+                except Exception as exc:
+                    self.info("Gagal membaca CSV yang dipilih:\n" + str(exc), "Error")
+            pick_document(picked, "text/*")
+            return
         try:
             from plyer import filechooser
             filechooser.open_file(on_selection=self._picked_file, filters=[("CSV files", "*.csv")])
@@ -269,10 +294,13 @@ class RootUI(BoxLayout):
             writer.writeheader()
             for row in self.rows:
                 writer.writerow({h: row.get(h, "") for h in self.headers})
-            Path(path).write_bytes(output.getvalue().encode(self.encoding))
+            data = output.getvalue().encode(self.encoding)
+            Path(path).write_bytes(data)
+            if platform == "android" and self._source_uri is not None and write_uri is not None:
+                write_uri(self._source_uri, data)
             self.file_path = path
             self.status = "CSV tersimpan: " + path
-            self.info("CSV berhasil disimpan.")
+            self.info("CSV berhasil disimpan." if self._source_uri is None else "CSV berhasil disimpan ke file yang dipilih di Android.")
         except Exception as exc:
             self.info("Gagal menyimpan CSV:\n" + str(exc), "Error")
 
