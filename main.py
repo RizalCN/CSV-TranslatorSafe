@@ -231,7 +231,7 @@ class RootUI(BoxLayout):
                     self.load_path()
                 except Exception as exc:
                     self.info("Gagal membaca CSV yang dipilih:\n" + str(exc), "Error")
-            pick_document(picked, "text/*")
+            pick_document(picked, "*/*")
             return
         try:
             from plyer import filechooser
