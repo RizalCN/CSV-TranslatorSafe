@@ -15,7 +15,7 @@ android.minapi = 23
 android.target_sdk = 28
 android.ndk = 25b
 android.accept_sdk_license = True
-android.archs = arm64-v8a, armeabi-v7a
+android.archs = arm64-v8a
 android.allow_backup = False
 p4a.branch = v2024.01.21
 
