@@ -1,31 +1,52 @@
+
 name: Build Toy Story 3 CSV Translator APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - '**.py'
-      - 'buildozer.spec'
-      - '.github/workflows/build-apk.yml'
+      - "**.py"
+      - "buildozer.spec"
+      - ".github/workflows/build-apk.yml"
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip python3-venv git zip unzip openjdk-17-jdk \
-            build-essential autoconf automake libtool pkg-config zlib1g-dev \
-            libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
-      - name: Install Buildozer
+          sudo apt-get install -y \
+            python3-pip python3-venv git zip unzip \
+            openjdk-17-jdk build-essential \
+            autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            cmake libffi-dev libssl-dev
+
+      - name: Install pinned build tools
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install buildozer cython
-      - name: Build debug APK
-        run: buildozer -v android debug
+          python3 -m pip install --upgrade "pip<26" setuptools wheel
+          python3 -m pip install \
+            "buildozer==1.5.0" \
+            "Cython==0.29.36"
+          buildozer --version
+          cython --version
+
+      - name: Verify configuration
+        run: |
+          grep -E '^(requirements|android.api|android.minapi|android.ndk|p4a.branch) *=' buildozer.spec
+          grep -q '^p4a.branch = v2024.01.21$' buildozer.spec
+
+      - name: Build APK
+        run: |
+          rm -rf .buildozer bin
+          buildozer -v android debug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
