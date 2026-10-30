@@ -185,6 +185,7 @@ KV = r'''
                 height: '170dp'
                 multiline: True
                 font_size: '14sp'
+                on_text: root.update_byte_status(self.text)
             BoxLayout:
                 size_hint_y: None
                 height: '44dp'
@@ -375,6 +376,18 @@ class RootUI(BoxLayout):
         self.ids.source_text.text=row.get(self.source_col,'') or ''; self.ids.translation_text.text=row.get('translation','') or ''
         self.row_label='%s / %s (index %s)'%(format(self.current+1,','),format(len(self.rows),','),row.get('index','?'))
         self.byte_label='Status byte: '+self._status_bytes(row)
+    def update_byte_status(self, text=None):
+        """Update the byte status immediately while the translation is edited."""
+        if not self.rows or self.current < 0 or self.current >= len(self.rows):
+            self.byte_label='Status byte: -'
+            return
+        # Evaluate the live editor contents without waiting for 'Terapkan edit'.
+        row=dict(self.rows[self.current])
+        if text is None:
+            text=self.ids.translation_text.text
+        row['translation']=text or ''
+        self.byte_label='Status byte: '+self._status_bytes(row)
+
     def apply_edit(self,show_message=True):
         if not self.rows: return
         self.rows[self.current]['translation']=self.ids.translation_text.text
