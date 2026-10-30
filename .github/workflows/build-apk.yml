@@ -1,34 +1,29 @@
-name: Build Android APK
+name: Build Toy Story 3 CSV Translator APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "master" ]
-
-permissions:
-  contents: read
+    paths:
+      - '**.py'
+      - 'buildozer.spec'
+      - '.github/workflows/build-apk.yml'
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-      - name: Install build dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip python3-pip python3-venv \
-            build-essential autoconf libtool pkg-config zlib1g-dev \
-            libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev \
-            libssl-dev
-          python3 -m pip install --user --upgrade 'pip<26' 'setuptools<81' wheel
-          python3 -m pip install --user buildozer cython==0.29.36
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y python3-pip python3-venv git zip unzip openjdk-17-jdk \
+            build-essential autoconf automake libtool pkg-config zlib1g-dev \
+            libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
+      - name: Install Buildozer
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install buildozer cython
       - name: Build debug APK
         run: buildozer -v android debug
       - name: Upload APK
@@ -37,3 +32,4 @@ jobs:
           name: ToyStory3-CSV-Translator-APK
           path: bin/*.apk
           if-no-files-found: error
+          retention-days: 14
